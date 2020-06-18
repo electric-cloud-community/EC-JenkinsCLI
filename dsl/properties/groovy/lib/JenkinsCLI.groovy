@@ -4,6 +4,7 @@ import com.cloudbees.flowpdf.components.cli.CLI
 import com.cloudbees.flowpdf.components.cli.Command
 import com.cloudbees.flowpdf.components.cli.ExecutionResult
 import com.cloudbees.flowpdf.exceptions.EntityDoesNotExist
+import com.cloudbees.flowpdf.exceptions.MissingFunctionArgument
 
 /**
  * JenkinsCLI
@@ -31,13 +32,6 @@ class JenkinsCLI extends FlowPlugin {
     def restartJenkins(StepParameters p, StepResult sr) {
         // Use this parameters wrapper for convenient access to your parameters
         RestartJenkinsParameters sp = RestartJenkinsParameters.initParameters(p)
-
-        /* Log is automatically available from the parent class */
-        log.info(
-                "restartJenkins was invoked with StepParameters",
-                /* runtimeParameters contains both configuration and procedure parameters */
-                p.toString()
-        )
 
         ExecutionResult result = executeCommand(["restart"])
 
@@ -148,12 +142,33 @@ class JenkinsCLI extends FlowPlugin {
                 p.toString()
         )
 
-        Context context = getContext()
+        String scriptPath = sp.getScriptPath()
+        String scriptText = sp.getScriptText()
 
-        // Setting job step summary to the config name
-        sr.setJobStepSummary(p.getParameter('config').getValue() ?: 'null')
+        File scriptFile
+        if (scriptText || scriptPath) {
+            if (scriptText) {
+                scriptFile = writeToFile(scriptText)
+            }
+            else {
+                scriptFile = new File(scriptPath)
+            }
+        } else {
+            throw new MissingFunctionArgument("One of 'Script Path' or 'Script Text'" +
+                    " should be specified.")
+        }
 
-        sr.setReportUrl("Sample Report", 'https://cloudbees.com')
+
+        ExecutionResult result = executeCommand(["groovy", "="], scriptFile)
+
+        if (!result.isSuccess()) {
+            log.error(result.toString())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
+
+        sr.setJobStepSummary("Success.")
         sr.apply()
         log.info("step Execute script has been finished")
     }
