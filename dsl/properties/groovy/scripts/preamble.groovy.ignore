@@ -1,0 +1,6 @@
+
+$[/myProject/groovy/lib/JenkinsCLI.groovy]
+$[/myProject/groovy/lib/RestartJenkinsParameters.groovy]
+$[/myProject/groovy/lib/InstallPluginParameters.groovy]
+$[/myProject/groovy/lib/ApplyConfigurationParameters.groovy]
+$[/myProject/groovy/lib/ExecuteScriptParameters.groovy]

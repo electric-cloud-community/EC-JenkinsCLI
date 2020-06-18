@@ -1,0 +1,117 @@
+pluginInfo:
+  # This is default sample specification
+  # Feel free to change it
+  # Call flowpdk showdoc pluginspec to see the list of available fields and their description
+  pluginName: 'EC-JenkinsCLI'
+  version: '1.0.0'
+  description: 'CloudBees CD wrapper for Jenkins CLI actions that cannot be performed with REST API'
+  author: 'Anton Horodchuk'
+  supportUrl: 'none'
+  category: 'Utilities'
+  shell: 'ec-groovy'
+
+# Plugin configuration description
+configuration:
+  # This is a shell used for checking connection
+  shell: 'ec-groovy'
+  # A script for checking connection will be generated
+  checkConnection: 'true'
+  # A set of fields will be added to process debug level in the configuration
+  hasDebugLevel: true
+  parameters:
+    - name: config
+      documentation: The name for the created configuration
+      required: true
+      type: entry
+      label: Configuration Name
+    - name: desc
+      documentation: Description for the configuration
+      required: false
+      type: entry
+      label: Description
+    - name: endpoint
+      documentation: Third-party endpoint to connect to.
+      required: false
+      type: entry
+      label: Endpoint
+    - name: credential
+      documentation: A sample credential
+      required: true
+      type: credential
+      label: Credential
+    - name: cliPath
+      documentation: Path to the jenkins-cli.jar
+      required: required
+      type: entry
+      label: CLI Path
+    - name: downloadCli
+      documentation: Download jenkins-cli.jar to the specified location before execution
+      required: true
+      type: checkbox
+      initiallyChecked: true
+      checkedValue: true
+      uncheckedValue: false
+      label: Download CLI?
+    - name: checkConnection
+      documentation: Check connection before saving configuration
+      required: true
+      type: checkbox
+      initiallyChecked: true
+      checkedValue: true
+      uncheckedValue: false
+      label: Check Connection
+
+procedures:
+  - name: 'Restart Jenkins'
+    description: 'Restarts Jenkins server'
+    hasConfig: true
+    parameters:
+      - name: waitForServer
+        documentation: Perform action and wait for server to be available.
+        required: true
+        type: checkbox
+        initiallyChecked: true
+        checkedValue: true
+        uncheckedValue: false
+        label: Wait For Server?
+
+  - name: 'Install Plugin'
+    description: 'Installs a plugin (should be available in Updates Center)'
+    hasConfig: true
+    type: entry
+    parameters:
+      - name: pluginPath
+        documentation: Path to plugin (URL or file path)
+        required: true
+        type: entry
+        label: Plugin File Path
+
+  - name: 'Apply Configuration'
+    description: 'Applies JCasC configuration'
+    hasConfig: true
+    parameters:
+      - name: configurationPath
+        documentation: Path to the file with a configuration YAML.
+        required: false
+        type: entry
+        label: File Path
+      - name: configurationYaml
+        documentation: Configuration in YAML format.
+        required: false
+        type: textarea
+        label: YAML
+
+  - name: 'Execute script'
+    description: 'Executes groovy script on server'
+    hasConfig: true
+    parameters:
+      - name: scriptPath
+        documentation: Path to the file with a script.
+        required: false
+        type: entry
+        label: File Path
+      - name: scriptText
+        documentation: Groovy script text.
+        required: false
+        type: textarea
+        label: Script text
