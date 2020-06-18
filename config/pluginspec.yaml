@@ -101,7 +101,7 @@ procedures:
         type: textarea
         label: YAML
 
-  - name: 'Execute script'
+  - name: 'Execute Script'
     description: 'Executes groovy script on server'
     hasConfig: true
     parameters:

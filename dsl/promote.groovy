@@ -19,7 +19,7 @@ def stepsWithAttachedCredentials = [
     [procedureName: "Restart Jenkins", stepName: "Restart Jenkins"],
     [procedureName: "Install Plugin", stepName: "Install Plugin"],
     [procedureName: "Apply Configuration", stepName: "Apply Configuration"],
-    [procedureName: "Execute script", stepName: "Execute script"],
+    [procedureName: "Execute Script", stepName: "Execute Script"],
 
 ]
 
@@ -46,7 +46,7 @@ project pluginName, {
 def retainedProperties = []
 
 upgrade(upgradeAction, pluginName, otherPluginName, stepsWithAttachedCredentials, 'ec_plugin_cfgs', retainedProperties)
-// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: 940774aec61df7231c15f4c5087a8cc5 ===
+// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: 3ebfd9d708bebb3c70f1a0c7706c8bf3 ===
 // Do not edit the code above this line
 
 project pluginName, {
