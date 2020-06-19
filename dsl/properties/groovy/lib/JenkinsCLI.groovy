@@ -1,4 +1,5 @@
 import com.cloudbees.flowpdf.*
+import com.cloudbees.flowpdf.client.REST
 import com.cloudbees.flowpdf.components.ComponentManager
 import com.cloudbees.flowpdf.components.cli.CLI
 import com.cloudbees.flowpdf.components.cli.Command
@@ -113,7 +114,7 @@ class JenkinsCLI extends FlowPlugin {
         )
 
         File scriptFile = contentOrFile(sp.getConfigurationYaml(), sp.getConfigurationPath())
-        if (!scriptFile){
+        if (!scriptFile) {
             throw new MissingFunctionArgument(
                     "One of 'Script Path' or 'Script Text' should be specified."
             )
@@ -153,7 +154,7 @@ class JenkinsCLI extends FlowPlugin {
         )
 
         File scriptFile = contentOrFile(sp.getScriptText(), sp.getScriptPath())
-        if (!scriptFile){
+        if (!scriptFile) {
             throw new MissingFunctionArgument(
                     "One of 'Script Path' or 'Script Text' should be specified."
             )
@@ -175,12 +176,11 @@ class JenkinsCLI extends FlowPlugin {
 
 // === step ends ===
 
-    File contentOrFile(String content, String filepath){
+    File contentOrFile(String content, String filepath) {
         File scriptFile = null
-        if (content){
+        if (content) {
             scriptFile = writeToFile(content)
-        }
-        else if (filepath){
+        } else if (filepath) {
             scriptFile = new File(filepath)
         }
         return scriptFile
@@ -217,22 +217,13 @@ class JenkinsCLI extends FlowPlugin {
     }
 
     void downloadCliTool(String filepath) {
-        String endpoint = getContext()
-                .getConfigValues()
-                .getRequiredParameter('endpoint')
-                .getValue()
-
+        String path = 'jnlpJars/jenkins-cli.jar'
+        REST rest = getContext().newRESTClient()
+        rest.setResponseContentType('BINARY')
+        byte[] bytes = rest.request('GET', path) as byte[]
 
         FileOutputStream fileStream = new FileOutputStream(new File(filepath))
-        BufferedInputStream input = new BufferedInputStream(
-                new URL(endpoint + '/jnlpJars/jenkins-cli.jar').openStream()
-        )
-
-        byte[] dataBuffer = new byte[1024]
-        int bytesRead;
-        while ((bytesRead = input.read(dataBuffer, 0, 1024)) != -1) {
-            fileStream.write(dataBuffer, 0, bytesRead);
-        }
+        fileStream.write(bytes)
     }
 
     File writeToFile(String content) {
