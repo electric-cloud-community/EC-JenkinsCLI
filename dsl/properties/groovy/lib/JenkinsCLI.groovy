@@ -77,19 +77,18 @@ class JenkinsCLI extends FlowPlugin {
         // Use this parameters wrapper for convenient access to your parameters
         InstallPluginParameters sp = InstallPluginParameters.initParameters(p)
 
-        /* Log is automatically available from the parent class */
-        log.info(
-                "installPlugin was invoked with StepParameters",
-                /* runtimeParameters contains both configuration and procedure parameters */
-                p.toString()
-        )
+        String path = sp.getPluginPath()
 
-        Context context = getContext()
+        ExecutionResult result = executeCommand(["install-plugin", path])
 
-        // Setting job step summary to the config name
-        sr.setJobStepSummary(p.getParameter('config').getValue() ?: 'null')
+        if (!result.isSuccess()) {
+            log.error(result.toString())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
 
-        sr.setReportUrl("Sample Report", 'https://cloudbees.com')
+        sr.setJobStepSummary("Success.")
         sr.apply()
         log.info("step Install Plugin has been finished")
     }
@@ -113,12 +112,23 @@ class JenkinsCLI extends FlowPlugin {
                 p.toString()
         )
 
-        Context context = getContext()
+        File scriptFile = contentOrFile(sp.getConfigurationYaml(), sp.getConfigurationPath())
+        if (!scriptFile){
+            throw new MissingFunctionArgument(
+                    "One of 'Script Path' or 'Script Text' should be specified."
+            )
+        }
 
-        // Setting job step summary to the config name
-        sr.setJobStepSummary(p.getParameter('config').getValue() ?: 'null')
+        ExecutionResult result = executeCommand(["apply-configuration"], scriptFile)
 
-        sr.setReportUrl("Sample Report", 'https://cloudbees.com')
+        if (!result.isSuccess()) {
+            log.error(result.toString())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
+
+        sr.setJobStepSummary("Success.")
         sr.apply()
         log.info("step Apply Configuration has been finished")
     }
@@ -142,22 +152,12 @@ class JenkinsCLI extends FlowPlugin {
                 p.toString()
         )
 
-        String scriptPath = sp.getScriptPath()
-        String scriptText = sp.getScriptText()
-
-        File scriptFile
-        if (scriptText || scriptPath) {
-            if (scriptText) {
-                scriptFile = writeToFile(scriptText)
-            }
-            else {
-                scriptFile = new File(scriptPath)
-            }
-        } else {
-            throw new MissingFunctionArgument("One of 'Script Path' or 'Script Text'" +
-                    " should be specified.")
+        File scriptFile = contentOrFile(sp.getScriptText(), sp.getScriptPath())
+        if (!scriptFile){
+            throw new MissingFunctionArgument(
+                    "One of 'Script Path' or 'Script Text' should be specified."
+            )
         }
-
 
         ExecutionResult result = executeCommand(["groovy", "="], scriptFile)
 
@@ -174,6 +174,17 @@ class JenkinsCLI extends FlowPlugin {
     }
 
 // === step ends ===
+
+    File contentOrFile(String content, String filepath){
+        File scriptFile = null
+        if (content){
+            scriptFile = writeToFile(content)
+        }
+        else if (filepath){
+            scriptFile = new File(filepath)
+        }
+        return scriptFile
+    }
 
     boolean isServerRunning() {
         try {
