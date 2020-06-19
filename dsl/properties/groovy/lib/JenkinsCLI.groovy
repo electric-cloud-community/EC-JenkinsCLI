@@ -48,21 +48,12 @@ class JenkinsCLI extends FlowPlugin {
         sr.apply()
 
         if (sp.getWaitForServer()) {
-            sr.setJobStepSummary("Waiting for server to start.")
-            int timeout = 300
-            while (!isServerRunning() && timeout > 0) {
-                sr.setJobStepSummary("$timeout seconds left before timeout.")
-                sr.apply()
-                timeout -= 5
-                sleep(5000)
+            if (waitForServer(300, sr)){
+                sr.setJobStepOutcome("Jenkins running after restart")
             }
-
-            if (timeout > 0) {
-                sr.flush()
-                sr.setJobStepSummary("Jenkins is running after restart.")
-            } else if (timeout <= 0) {
-                sr.setJobStepSummary("Reached timeout while waiting server to start.")
-                sr.setJobStepOutcome('error')
+            else {
+                sr.setJobStepOutcome("error")
+                sr.setJobStepOutcome("Reached timeout while waiting for server")
             }
         }
 
@@ -175,6 +166,36 @@ class JenkinsCLI extends FlowPlugin {
         log.info("step Execute script has been finished")
     }
 
+/**
+    * waitForServer - Wait for Server/Wait for Server
+    * Add your code into this method and it will be called when the step runs
+    * @param config (required: true)
+    * @param waitTimeout (required: true)
+    
+    */
+    def waitForServer(StepParameters p, StepResult sr) {
+        // Use this parameters wrapper for convenient access to your parameters
+        WaitForServerParameters sp = WaitForServerParameters.initParameters(p)
+
+        /* Log is automatically available from the parent class */
+        log.info(
+          "waitForServer was invoked with StepParameters",
+          /* runtimeParameters contains both configuration and procedure parameters */
+          p.toString()
+        )
+
+        if (waitForServer(sp.getWaitTimeout(), sr)){
+            sr.setJobStepOutcome("Jenkins running after restart")
+        }
+        else {
+            sr.setJobStepOutcome("error")
+            sr.setJobStepOutcome("Reached timeout while waiting for server")
+        }
+
+        sr.apply()
+        log.info("step Wait for Server has been finished")
+    }
+
 // === step ends ===
 
     File contentOrFile(String content, String filepath) {
@@ -185,6 +206,29 @@ class JenkinsCLI extends FlowPlugin {
             scriptFile = new File(filepath)
         }
         return scriptFile
+    }
+
+    boolean waitForServer(int timeout = 300, StepResult sr){
+        int pollingPeriod = 5
+
+        sr.setJobStepSummary("Waiting for server to start.")
+
+        while (!isServerRunning() && timeout > 0) {
+            sr.setJobStepSummary("$timeout seconds left before timeout.")
+            sr.apply()
+            timeout -= pollingPeriod
+            sleep(pollingPeriod * 1000)
+        }
+
+        if (timeout > 0) {
+            sr.flush()
+            sr.setJobStepSummary("Jenkins is running.")
+        } else if (timeout <= 0) {
+            sr.setJobStepSummary("Reached timeout while waiting server to start.")
+            sr.setJobStepOutcome('error')
+        }
+
+        return timeout >= 0
     }
 
     boolean isServerRunning() {

@@ -75,10 +75,20 @@ procedures:
         uncheckedValue: false
         label: Wait For Server?
 
+  - name: 'Wait for Server'
+    description: 'Polling server until it is ready to serve requests'
+    hasConfig: true
+    parameters:
+      - name: waitTimeout
+        default: 300
+        documentation: Wait for server to be available.
+        required: true
+        type: entry
+        label: Timeout
+
   - name: 'Install Plugin'
     description: 'Installs a plugin (should be available in Updates Center)'
     hasConfig: true
-    type: entry
     parameters:
       - name: pluginPath
         documentation: Path to plugin (URL or file path)

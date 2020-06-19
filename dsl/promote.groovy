@@ -17,6 +17,7 @@ def pluginDir = getProperty("/projects/$pluginName/pluginDir").value
 //List of procedure steps to which the plugin configuration credentials need to be attached
 def stepsWithAttachedCredentials = [
     [procedureName: "Restart Jenkins", stepName: "Restart Jenkins"],
+    [procedureName: "Wait for Server", stepName: "Wait for Server"],
     [procedureName: "Install Plugin", stepName: "Install Plugin"],
     [procedureName: "Apply Configuration", stepName: "Apply Configuration"],
     [procedureName: "Execute Script", stepName: "Execute Script"],
@@ -46,7 +47,7 @@ project pluginName, {
 def retainedProperties = []
 
 upgrade(upgradeAction, pluginName, otherPluginName, stepsWithAttachedCredentials, 'ec_plugin_cfgs', retainedProperties)
-// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: 3ebfd9d708bebb3c70f1a0c7706c8bf3 ===
+// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: 65b4eb331e4f20d04d9ccc45605a6735 ===
 // Do not edit the code above this line
 
 project pluginName, {
