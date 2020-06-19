@@ -6,6 +6,7 @@ import com.cloudbees.flowpdf.components.cli.Command
 import com.cloudbees.flowpdf.components.cli.ExecutionResult
 import com.cloudbees.flowpdf.exceptions.EntityDoesNotExist
 import com.cloudbees.flowpdf.exceptions.MissingFunctionArgument
+import com.cloudbees.flowpdf.exceptions.UnexpectedEmptyValue
 
 /**
  * JenkinsCLI
@@ -115,7 +116,7 @@ class JenkinsCLI extends FlowPlugin {
 
         File scriptFile = contentOrFile(sp.getConfigurationYaml(), sp.getConfigurationPath())
         if (!scriptFile) {
-            throw new MissingFunctionArgument(
+            throw new UnexpectedEmptyValue(
                     "One of 'Script Path' or 'Script Text' should be specified."
             )
         }
@@ -155,7 +156,7 @@ class JenkinsCLI extends FlowPlugin {
 
         File scriptFile = contentOrFile(sp.getScriptText(), sp.getScriptPath())
         if (!scriptFile) {
-            throw new MissingFunctionArgument(
+            throw new UnexpectedEmptyValue(
                     "One of 'Script Path' or 'Script Text' should be specified."
             )
         }
