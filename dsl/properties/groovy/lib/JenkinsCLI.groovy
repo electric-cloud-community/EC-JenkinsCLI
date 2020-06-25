@@ -5,8 +5,9 @@ import com.cloudbees.flowpdf.components.cli.CLI
 import com.cloudbees.flowpdf.components.cli.Command
 import com.cloudbees.flowpdf.components.cli.ExecutionResult
 import com.cloudbees.flowpdf.exceptions.EntityDoesNotExist
-import com.cloudbees.flowpdf.exceptions.MissingFunctionArgument
 import com.cloudbees.flowpdf.exceptions.UnexpectedEmptyValue
+import com.cloudbees.flowpdf.exceptions.WrongFunctionArgumentValue
+import com.electriccloud.client.groovy.models.ActualParameter
 
 /**
  * JenkinsCLI
@@ -48,10 +49,9 @@ class JenkinsCLI extends FlowPlugin {
         sr.apply()
 
         if (sp.getWaitForServer()) {
-            if (waitForServer(300, sr)){
+            if (pollUntilServerAvailable(300, sr)) {
                 sr.setJobStepOutcome("Jenkins running after restart")
-            }
-            else {
+            } else {
                 sr.setJobStepOutcome("error")
                 sr.setJobStepOutcome("Reached timeout while waiting for server")
             }
@@ -167,33 +167,141 @@ class JenkinsCLI extends FlowPlugin {
     }
 
 /**
-    * waitForServer - Wait for Server/Wait for Server
-    * Add your code into this method and it will be called when the step runs
-    * @param config (required: true)
-    * @param waitTimeout (required: true)
-    
-    */
+ * waitForServer - Wait for Server/Wait for Server
+ * Add your code into this method and it will be called when the step runs
+ * @param config (required: true)
+ * @param waitTimeout (required: true)
+
+ */
     def waitForServer(StepParameters p, StepResult sr) {
         // Use this parameters wrapper for convenient access to your parameters
         WaitForServerParameters sp = WaitForServerParameters.initParameters(p)
 
         /* Log is automatically available from the parent class */
         log.info(
-          "waitForServer was invoked with StepParameters",
-          /* runtimeParameters contains both configuration and procedure parameters */
-          p.toString()
+                "waitForServer was invoked with StepParameters",
+                /* runtimeParameters contains both configuration and procedure parameters */
+                p.toString()
         )
 
-        if (waitForServer(sp.getWaitTimeout(), sr)){
+        if (pollUntilServerAvailable(sp.getWaitTimeout(), sr)) {
             sr.setJobStepOutcome("Jenkins running after restart")
-        }
-        else {
+        } else {
             sr.setJobStepOutcome("error")
             sr.setJobStepOutcome("Reached timeout while waiting for server")
         }
 
         sr.apply()
         log.info("step Wait for Server has been finished")
+    }
+
+/**
+ * createMasterConfiguration - Create Master Configuration/Create Master Configuration
+ * Add your code into this method and it will be called when the step runs
+ * @param config (required: true)
+ * @param masterName (required: true)
+
+ */
+    def createMasterConfiguration(StepParameters p, StepResult sr) {
+        // Use this parameters wrapper for convenient access to your parameters
+        CreateMasterConfigurationParameters sp = CreateMasterConfigurationParameters.initParameters(p)
+
+        // Simply calling CreateConfiguration with updated name and url
+        String masterName = sp.masterName.toLowerCase()
+
+        if (!(masterName =~ /^[a-zA-Z0-9_-]+$/)) {
+            throw new WrongFunctionArgumentValue("Master name can't contain non-alphanumeric symbols");
+        }
+
+        String config = p.getRequiredParameter("config").getValue()
+
+        Map configMap = context.getConfigValues().getAsMap()
+        configMap.description = "Created from configuration '${config}' for master '${masterName}'"
+        configMap.endpoint = configMap.endpoint + '/' + masterName
+        configMap.config = config + '_' + masterName
+
+        Credential cjocCredential = p.getRequiredCredential('credential')
+
+        log.info("Starting CreateConfiguration")
+        log.debug("with parameters: " + configMap.toString())
+
+
+        def procedureRun = FlowAPI.getEc().runProcedure([
+                projectName     : getPluginProjectName(),
+                procedureName   : 'CreateConfiguration',
+                actualParameters: [
+                        new ActualParameter(
+                                actualParameterName: 'config',
+                                value: configMap.config
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'endpoint',
+                                value: configMap.endpoint
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'desc',
+                                value: configMap.description
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'downloadCli',
+                                value: configMap.downloadCli
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'debugLevel',
+                                value: configMap.debugLevel
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'cliPath',
+                                value: configMap.cliPath
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'checkConnection',
+                                value: configMap.checkConnection
+                        ),
+                        new ActualParameter(
+                                actualParameterName: 'credential',
+                                value: 'credential'
+                        )
+
+                ],
+                credentials     : [
+                        new com.electriccloud.client.groovy.models.Credential(
+                                credentialName: 'credential',
+                                userName: cjocCredential.getUserName(),
+                                password: cjocCredential.getSecretValue(),
+                        )
+                ]
+        ])
+
+        def jobDetails = ['job': ['status': 'unknown']]
+        int timeout = 60
+
+        while (jobDetails['job']['status'] != 'completed' && timeout >= 0) {
+            jobDetails = FlowAPI.getEc().getJobDetails(jobId: procedureRun.jobId)
+
+            Map debugJobDetails = jobDetails.clone()
+            debugJobDetails['job'].remove('command')
+            log.debug("JOB DETAILS : " + debugJobDetails.toString())
+
+            if (jobDetails['job']['status'] == 'completed') {
+                break
+            }
+
+            timeout -= 5
+            Thread.sleep(5000)
+        }
+
+        Map debugJobDetails = jobDetails.clone()
+        debugJobDetails['job'].remove('command')
+        log.debug("JOB DETAILS : " + debugJobDetails.toString())
+
+        if (jobDetails['job']['outcome'] != 'success') {
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("CreateConfiguration failed")
+        } else {
+            sr.setOutcomeProperty(sp.resultProperty, configMap.config as String)
+        }
+
     }
 
 // === step ends ===
@@ -208,7 +316,7 @@ class JenkinsCLI extends FlowPlugin {
         return scriptFile
     }
 
-    boolean waitForServer(int timeout = 300, StepResult sr){
+    boolean pollUntilServerAvailable(int timeout = 300, StepResult sr) {
         int pollingPeriod = 5
 
         sr.setJobStepSummary("Waiting for server to start.")

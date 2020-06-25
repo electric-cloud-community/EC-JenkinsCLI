@@ -21,6 +21,7 @@ def stepsWithAttachedCredentials = [
     [procedureName: "Install Plugin", stepName: "Install Plugin"],
     [procedureName: "Apply Configuration", stepName: "Apply Configuration"],
     [procedureName: "Execute Script", stepName: "Execute Script"],
+    [procedureName: "Create Master Configuration", stepName: "Create Master Configuration"],
 
 ]
 
@@ -47,7 +48,7 @@ project pluginName, {
 def retainedProperties = []
 
 upgrade(upgradeAction, pluginName, otherPluginName, stepsWithAttachedCredentials, 'ec_plugin_cfgs', retainedProperties)
-// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: 65b4eb331e4f20d04d9ccc45605a6735 ===
+// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: d3efc3d27c0f993858b9dc5c69d322ed ===
 // Do not edit the code above this line
 
 project pluginName, {

@@ -125,3 +125,20 @@ procedures:
         required: false
         type: textarea
         label: Script text
+
+  - name: 'Create Master Configuration'
+    description: 'Creates additional configuration for the CJOC Managed Master'
+    hasConfig: true
+    parameters:
+      - name: masterName
+        documentation: Name of the managed master
+        required: true
+        type: entry
+        label: Master Name
+      - name: resultProperty
+        documentation: Where to save result configuration name
+        default: '/myJobStep/configName'
+        value: '/myJobStep/configName'
+        required: true
+        type: entry
+        label: Result Property

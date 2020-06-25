@@ -9,3 +9,4 @@ Procedures:
  - Install Plugin
  - Execute Script
  - Apply Configuration
+ - Create Master Configuration
