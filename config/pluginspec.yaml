@@ -66,6 +66,14 @@ procedures:
     description: 'Restarts Jenkins server'
     hasConfig: true
     parameters:
+      - name: safe
+        label: Perform Safe Restart?
+        documentation: Jenkins will perform restart when jobs are finished
+        required: true
+        type: checkbox
+        initiallyChecked: true
+        checkedValue: true
+        uncheckedValue: false
       - name: waitForServer
         documentation: Perform action and wait for server to be available.
         required: true

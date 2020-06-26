@@ -15,6 +15,16 @@
   </formElement>
   <formElement>
     <type>checkbox</type>
+    <property>safe</property>
+    <required>1</required>
+    <documentation>Jenkins will perform restart when jobs are finished</documentation>
+    <label>Perform Safe Restart?:</label>
+    <checkedValue>true</checkedValue>
+    <initiallyChecked>true</initiallyChecked>
+    <uncheckedValue>false</uncheckedValue>
+  </formElement>
+  <formElement>
+    <type>checkbox</type>
     <property>waitForServer</property>
     <required>1</required>
     <documentation>Perform action and wait for server to be available.</documentation>

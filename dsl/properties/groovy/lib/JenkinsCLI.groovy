@@ -8,6 +8,7 @@ import com.cloudbees.flowpdf.exceptions.EntityDoesNotExist
 import com.cloudbees.flowpdf.exceptions.UnexpectedEmptyValue
 import com.cloudbees.flowpdf.exceptions.WrongFunctionArgumentValue
 import com.electriccloud.client.groovy.models.ActualParameter
+import groovy.json.JsonOutput
 
 /**
  * JenkinsCLI
@@ -36,7 +37,8 @@ class JenkinsCLI extends FlowPlugin {
         // Use this parameters wrapper for convenient access to your parameters
         RestartJenkinsParameters sp = RestartJenkinsParameters.initParameters(p)
 
-        ExecutionResult result = executeCommand(["restart"])
+        String command = (sp.safe) ? 'safe-restart' : 'restart'
+        ExecutionResult result = executeCommand([command])
 
         if (!result.isSuccess()) {
             log.error(result.toString())
@@ -48,15 +50,15 @@ class JenkinsCLI extends FlowPlugin {
         sr.setJobStepSummary("Restarted.")
         sr.apply()
 
-        if (sp.getWaitForServer()) {
+        if (sp.waitForServer) {
             if (pollUntilServerAvailable(300, sr)) {
-                sr.setJobStepOutcome("Jenkins running after restart")
+                sr.setJobStepOutcome("success")
+                sr.setJobStepSummary("Jenkins running after restart")
             } else {
                 sr.setJobStepOutcome("error")
-                sr.setJobStepOutcome("Reached timeout while waiting for server")
+                sr.setJobStepSummary("Reached timeout while waiting for server")
             }
         }
-
     }
 
 /**
@@ -72,7 +74,19 @@ class JenkinsCLI extends FlowPlugin {
 
         String path = sp.getPluginPath()
 
-        ExecutionResult result = executeCommand(["install-plugin", path])
+        // Local files should be passed to STDIN
+        ExecutionResult result
+        if (path.startsWith('/')){
+            File pluginFile = new File(path)
+            if (!pluginFile.exists()){
+                throw new WrongFunctionArgumentValue("File $path does not exist")
+            }
+            result = executeCommand(["install-plugin", '='], pluginFile)
+        }
+        else{
+            result = executeCommand(["install-plugin", path])
+        }
+
 
         if (!result.isSuccess()) {
             log.error(result.toString())
@@ -98,13 +112,6 @@ class JenkinsCLI extends FlowPlugin {
         // Use this parameters wrapper for convenient access to your parameters
         ApplyConfigurationParameters sp = ApplyConfigurationParameters.initParameters(p)
 
-        /* Log is automatically available from the parent class */
-        log.info(
-                "applyConfiguration was invoked with StepParameters",
-                /* runtimeParameters contains both configuration and procedure parameters */
-                p.toString()
-        )
-
         File scriptFile = contentOrFile(sp.getConfigurationYaml(), sp.getConfigurationPath())
         if (!scriptFile) {
             throw new UnexpectedEmptyValue(
@@ -121,7 +128,7 @@ class JenkinsCLI extends FlowPlugin {
             return
         }
 
-        sr.setJobStepSummary("Success.")
+        sr.setJobStepSummary("Success")
         sr.apply()
         log.info("step Apply Configuration has been finished")
     }
@@ -137,13 +144,6 @@ class JenkinsCLI extends FlowPlugin {
     def executeScript(StepParameters p, StepResult sr) {
         // Use this parameters wrapper for convenient access to your parameters
         ExecuteScriptParameters sp = ExecuteScriptParameters.initParameters(p)
-
-        /* Log is automatically available from the parent class */
-        log.info(
-                "executeScript was invoked with StepParameters",
-                /* runtimeParameters contains both configuration and procedure parameters */
-                p.toString()
-        )
 
         File scriptFile = contentOrFile(sp.getScriptText(), sp.getScriptPath())
         if (!scriptFile) {
@@ -177,18 +177,13 @@ class JenkinsCLI extends FlowPlugin {
         // Use this parameters wrapper for convenient access to your parameters
         WaitForServerParameters sp = WaitForServerParameters.initParameters(p)
 
-        /* Log is automatically available from the parent class */
-        log.info(
-                "waitForServer was invoked with StepParameters",
-                /* runtimeParameters contains both configuration and procedure parameters */
-                p.toString()
-        )
+        int timeout = Integer.parseInt(sp.getWaitTimeout())
 
-        if (pollUntilServerAvailable(sp.getWaitTimeout(), sr)) {
-            sr.setJobStepOutcome("Jenkins running after restart")
+        if (pollUntilServerAvailable(timeout, sr)) {
+            sr.setJobStepSummary("Jenkins running after restart")
         } else {
             sr.setJobStepOutcome("error")
-            sr.setJobStepOutcome("Reached timeout while waiting for server")
+            sr.setJobStepSummary("Reached timeout while waiting for server")
         }
 
         sr.apply()
@@ -215,9 +210,9 @@ class JenkinsCLI extends FlowPlugin {
 
         String config = p.getRequiredParameter("config").getValue()
 
-        Map configMap = context.getConfigValues().getAsMap()
+        Map<String, String> configMap = context.getConfigValues().getAsMap()
         configMap.description = "Created from configuration '${config}' for master '${masterName}'"
-        configMap.endpoint = configMap.endpoint + '/' + masterName
+        configMap.endpoint = sanitizeEndpoint(configMap.endpoint) - 'cjoc' + masterName
         configMap.config = config + '_' + masterName
 
         Credential cjocCredential = p.getRequiredCredential('credential')
@@ -273,17 +268,14 @@ class JenkinsCLI extends FlowPlugin {
                 ]
         ])
 
-        def jobDetails = ['job': ['status': 'unknown']]
+        Map<String, Object> jobDetails = ['status': 'unknown']
         int timeout = 60
 
-        while (jobDetails['job']['status'] != 'completed' && timeout >= 0) {
-            jobDetails = FlowAPI.getEc().getJobDetails(jobId: procedureRun.jobId)
+        while (jobDetails['status'] != 'completed' && timeout >= 0) {
+            jobDetails = FlowAPI.getEc().getJobDetails(jobId: procedureRun.jobId)['job']
+            logJobDetails(jobDetails.clone() as Map<String, Object>)
 
-            Map debugJobDetails = jobDetails.clone()
-            debugJobDetails['job'].remove('command')
-            log.debug("JOB DETAILS : " + debugJobDetails.toString())
-
-            if (jobDetails['job']['status'] == 'completed') {
+            if (jobDetails['status'] == 'completed') {
                 break
             }
 
@@ -291,11 +283,9 @@ class JenkinsCLI extends FlowPlugin {
             Thread.sleep(5000)
         }
 
-        Map debugJobDetails = jobDetails.clone()
-        debugJobDetails['job'].remove('command')
-        log.debug("JOB DETAILS : " + debugJobDetails.toString())
+        logJobDetails(jobDetails.clone() as Map<String, Object>)
 
-        if (jobDetails['job']['outcome'] != 'success') {
+        if (jobDetails['outcome'] != 'success') {
             sr.setJobStepOutcome('error')
             sr.setJobStepSummary("CreateConfiguration failed")
         } else {
@@ -316,14 +306,14 @@ class JenkinsCLI extends FlowPlugin {
         return scriptFile
     }
 
-    boolean pollUntilServerAvailable(int timeout = 300, StepResult sr) {
+    private boolean pollUntilServerAvailable(int timeout = 300, StepResult sr) {
         int pollingPeriod = 5
 
         sr.setJobStepSummary("Waiting for server to start.")
 
         while (!isServerRunning() && timeout > 0) {
             sr.setJobStepSummary("$timeout seconds left before timeout.")
-            sr.apply()
+            sr.applyAndFlush()
             timeout -= pollingPeriod
             sleep(pollingPeriod * 1000)
         }
@@ -370,8 +360,9 @@ class JenkinsCLI extends FlowPlugin {
     }
 
     void downloadCliTool(String filepath) {
-        String path = 'jnlpJars/jenkins-cli.jar'
+        String path = '/jnlpJars/jenkins-cli.jar'
         REST rest = getContext().newRESTClient()
+
         rest.setResponseContentType('BINARY')
         byte[] bytes = rest.request('GET', path) as byte[]
 
@@ -388,14 +379,19 @@ class JenkinsCLI extends FlowPlugin {
     ExecutionResult executeCommand(List<String> parameters, File stdinFile = null) {
 
         Config config = this.getContext().getCurrentStepConfigValues()
-        CLI cli = (CLI) ComponentManager.loadComponent(
-                CLI.class,
-                [workingDirectory: System.getProperty('user.dir')],
-                this
-        )
+        CLI cli
+
+        // Trying to reload component before instantiating new one
+        try {
+            cli = (CLI) ComponentManager.getComponent(CLI.class)
+        } catch (RuntimeException ex) {
+            Map componentOptions = [workingDirectory: System.getProperty('user.dir')]
+            cli = (CLI) ComponentManager.loadComponent(CLI.class, componentOptions, this)
+        }
 
         String cliPath = getCliPath()
         String endpoint = config.getRequiredParameter('endpoint').getValue()
+        endpoint = sanitizeEndpoint(endpoint)
 
         Credential cred = config.getRequiredCredential('credential')
         String username = cred.getUserName()
@@ -467,6 +463,30 @@ class JenkinsCLI extends FlowPlugin {
             )
             throw ex
         }
+    }
+
+    private static String sanitizeEndpoint(String endpoint) {
+        if (endpoint.endsWith('/')) {
+            endpoint = endpoint.replaceAll(/\/+$/, '')
+        }
+
+        return endpoint
+    }
+
+    private static void logJobDetails(Map<String, Object> jobDetails) {
+        def cleaned = cleanCommandProperty(jobDetails)
+        Log.logDebug("JOB DETAILS : " + JsonOutput.toJson(cleaned).toString())
+    }
+
+    private static def cleanCommandProperty(Map<String, Object> structure) {
+        structure.each { k, v ->
+            if (k == "command") {
+                structure.remove("command")
+            } else if (v instanceof Map) {
+                structure[k] = cleanCommandProperty(v)
+            }
+        }
+        return structure
     }
 
 }
