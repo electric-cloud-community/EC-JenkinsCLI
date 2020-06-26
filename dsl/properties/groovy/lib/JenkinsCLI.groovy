@@ -1,5 +1,6 @@
 import com.cloudbees.flowpdf.*
 import com.cloudbees.flowpdf.client.REST
+import com.cloudbees.flowpdf.client.RESTConfig
 import com.cloudbees.flowpdf.components.ComponentManager
 import com.cloudbees.flowpdf.components.cli.CLI
 import com.cloudbees.flowpdf.components.cli.Command
@@ -76,14 +77,13 @@ class JenkinsCLI extends FlowPlugin {
 
         // Local files should be passed to STDIN
         ExecutionResult result
-        if (path.startsWith('/')){
+        if (path.startsWith('/')) {
             File pluginFile = new File(path)
-            if (!pluginFile.exists()){
+            if (!pluginFile.exists()) {
                 throw new WrongFunctionArgumentValue("File $path does not exist")
             }
             result = executeCommand(["install-plugin", '='], pluginFile)
-        }
-        else{
+        } else {
             result = executeCommand(["install-plugin", path])
         }
 
@@ -308,33 +308,50 @@ class JenkinsCLI extends FlowPlugin {
 
     private boolean pollUntilServerAvailable(int timeout = 300, StepResult sr) {
         int pollingPeriod = 5
+        int waited = timeout
+        sr.setJobStepSummary("Waiting ${timeout} seconds for server to start.")
 
-        sr.setJobStepSummary("Waiting for server to start.")
-
-        while (!isServerRunning() && timeout > 0) {
-            sr.setJobStepSummary("$timeout seconds left before timeout.")
+        while (!isServerRunning() && waited > 0) {
+            sr.setJobStepSummary("$waited/$timeout seconds left.")
             sr.applyAndFlush()
-            timeout -= pollingPeriod
+
+            waited -= pollingPeriod
             sleep(pollingPeriod * 1000)
         }
 
-        if (timeout > 0) {
+        if (waited > 0) {
             sr.flush()
-            sr.setJobStepSummary("Jenkins is running.")
+            sr.setJobStepSummary("Jenkins is running after ${timeout - waited} seconds.")
         } else if (timeout <= 0) {
             sr.setJobStepSummary("Reached timeout while waiting server to start.")
             sr.setJobStepOutcome('error')
         }
 
+        sr.apply()
+
         return timeout >= 0
     }
 
     boolean isServerRunning() {
+        Config conf = getContext().getConfigValues()
+
+        String endpoint = conf.getRequiredParameter('endpoint').getValue()
+        Credential cred = conf.getRequiredCredential('credential')
+
+        RESTConfig restConfig = new RESTConfig([
+                authScheme: 'basic',
+                endpoint  : endpoint
+        ])
+
+        restConfig.acquireCredentialForScheme('basic', cred)
+
+        REST rest = getContext().newRESTClient(restConfig)
+
         try {
-            def res = executeCommand(['help'])
-            return res.isSuccess()
+            def result = rest.request('GET', '/api/json')
+            return !(result =~ /^Error:/)
         }
-        catch (RuntimeException ex) {
+        catch (Exception ex) {
             log.debug(ex.getMessage())
         }
         return false
@@ -360,6 +377,19 @@ class JenkinsCLI extends FlowPlugin {
     }
 
     void downloadCliTool(String filepath) {
+        if (!isServerRunning()) {
+            log.info("We are downloading the jenkins-cli.jar" +
+                    " but server is not running yet, so we will wait 90 seconds for server to start"
+            )
+            if (!pollUntilServerAvailable(90, getContext().newStepResult())) {
+                getContext().bailOut(
+                        "Server was not ready to provide the jenkins-cli.jar in 90 seconds." +
+                                " Consider downloading the tool or add sleep in your code." +
+                                " This also can be caused by network error. Check log for details."
+                )
+            }
+        }
+
         String path = '/jnlpJars/jenkins-cli.jar'
         REST rest = getContext().newRESTClient()
 
