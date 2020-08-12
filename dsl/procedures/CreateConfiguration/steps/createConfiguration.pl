@@ -122,8 +122,8 @@ sub createAndAttachCredential {
     for my $step( @$steps ) {
         print "Attaching credential to procedure " . $step->{procedureName} . " at step " . $step->{stepName} . "\n";
         my $apath = $ec->attachCredential($projName, $credObjectName,
-                                        {procedureName => $step->{procedureName},
-                                         stepName => $step->{stepName}});
+            {procedureName => $step->{procedureName},
+                stepName => $step->{stepName}});
         $errors .= $ec->checkAllErrors($apath);
     }
 

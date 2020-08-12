@@ -1,5 +1,5 @@
 
-// DO NOT EDIT THIS BLOCK === configuration starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== configuration starts ===
 // This part is auto-generated and will be regenerated upon subsequent updates
 procedure 'EditConfiguration', description: 'Checks connection for the changed configuration', {
 
@@ -22,4 +22,4 @@ procedure 'EditConfiguration', description: 'Checks connection for the changed c
         condition: '$[/javascript myJob.checkConnection == "true" || myJob.checkConnection == "1"]'
 
 }
-// DO NOT EDIT THIS BLOCK === configuration ends, checksum: a87427b04cff5e61480bc6cae5d6a33b ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== configuration ends, checksum: a87427b04cff5e61480bc6cae5d6a33b ===

@@ -1,4 +1,4 @@
 $[/myProject/groovy/scripts/preamble.groovy.ignore]
 
-JenkinsCLI plugin = new JenkinsCLI()
+JenkinsCLIWrapper plugin = new JenkinsCLIWrapper()
 plugin.runStep('Install Plugin', 'Install Plugin', 'installPlugin')

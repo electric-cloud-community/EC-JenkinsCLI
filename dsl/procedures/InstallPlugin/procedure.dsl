@@ -1,5 +1,5 @@
 // This procedure.dsl was generated automatically
-// DO NOT EDIT THIS BLOCK === procedure_autogen starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== procedure_autogen starts ===
 procedure 'Install Plugin', description: '''Installs a plugin (should be available in Updates Center)''', {
 
     // Handling binary dependencies
@@ -21,7 +21,7 @@ procedure 'Install Plugin', description: '''Installs a plugin (should be availab
 
         postProcessor = '''$[/myProject/perl/postpLoader]'''
     }
-// DO NOT EDIT THIS BLOCK === procedure_autogen ends, checksum: 68a52845d819bf357175f6b2808ddec8 ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== procedure_autogen ends, checksum: 68a52845d819bf357175f6b2808ddec8 ===
 // Do not update the code above the line
 // procedure properties declaration can be placed in here, like
 // property 'property name', value: "value"

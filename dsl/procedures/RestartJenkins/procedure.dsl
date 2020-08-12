@@ -1,5 +1,5 @@
 // This procedure.dsl was generated automatically
-// DO NOT EDIT THIS BLOCK === procedure_autogen starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== procedure_autogen starts ===
 procedure 'Restart Jenkins', description: '''Restarts Jenkins server''', {
 
     // Handling binary dependencies
@@ -21,7 +21,7 @@ procedure 'Restart Jenkins', description: '''Restarts Jenkins server''', {
 
         postProcessor = '''$[/myProject/perl/postpLoader]'''
     }
-// DO NOT EDIT THIS BLOCK === procedure_autogen ends, checksum: 329902e46a506664825f098bd040de93 ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== procedure_autogen ends, checksum: 329902e46a506664825f098bd040de93 ===
 // Do not update the code above the line
 // procedure properties declaration can be placed in here, like
 // property 'property name', value: "value"

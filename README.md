@@ -1,4 +1,4 @@
-## EC-JenkinsCLI
+## EC-JenkinsCLIWrapper
 
 Wrapper for the Jenkins CLI tool.
 

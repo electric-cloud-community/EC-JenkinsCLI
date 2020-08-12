@@ -1,5 +1,5 @@
 // This procedure.dsl was generated automatically
-// DO NOT EDIT THIS BLOCK === procedure_autogen starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== procedure_autogen starts ===
 procedure 'Create Master Configuration', description: '''Creates additional configuration for the CJOC Managed Master''', {
 
     // Handling binary dependencies
@@ -21,7 +21,7 @@ procedure 'Create Master Configuration', description: '''Creates additional conf
 
         postProcessor = '''$[/myProject/perl/postpLoader]'''
     }
-// DO NOT EDIT THIS BLOCK === procedure_autogen ends, checksum: 0895f1c6964f44e856557e90307daefd ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== procedure_autogen ends, checksum: 0895f1c6964f44e856557e90307daefd ===
 // Do not update the code above the line
 // procedure properties declaration can be placed in here, like
 // property 'property name', value: "value"

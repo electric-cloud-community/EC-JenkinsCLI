@@ -1,5 +1,5 @@
 
-// DO NOT EDIT THIS BLOCK === configuration starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== configuration starts ===
 procedure 'CreateConfiguration', description: 'Creates a plugin configuration', {
 
     //First, let's download third-party dependencies
@@ -30,5 +30,5 @@ procedure 'CreateConfiguration', description: 'Creates a plugin configuration', 
         timeLimitUnits: 'minutes'
 
     property 'ec_checkConnection', value: ''
-// DO NOT EDIT THIS BLOCK === configuration ends, checksum: 36b51d355f49c6abe7bbad96eee5b8cc ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== configuration ends, checksum: 36b51d355f49c6abe7bbad96eee5b8cc ===
 }

@@ -1,17 +1,26 @@
 apply plugin: 'groovy'
 
-repositories{
+repositories {
     mavenCentral()
     flatDir {
         dirs 'agent/deps/libs'
+    }
+    flatDir {
+        dirs 'libs'
     }
 }
 
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:2.4.13'
+    implementation project(':jenkins-cli-wrapper')
 
     // Change the version if you have upgraded the groovy library
-    implementation 'com.electriccloud.plugins:flowpdf-groovy-lib:1.1.0.0'
+    implementation 'com.electriccloud.plugins:flowpdf-groovy-lib:1.1.1.0'
+    implementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
+
+    implementation files(new File(projectDir, '../libs/commander-api-bindings.jar'))
+    implementation('com.electriccloud:commander-api-bindings:9.2.0-SNAPSHOT')
+
 }
 
 
@@ -34,5 +43,12 @@ task copyDependencies(type: Copy) {
         exclude group: "commons-collections", module: 'commons-collections'
         exclude group: "com.electriccloud.plugins", module: 'flowpdf-groovy-lib'
     }
+
+    from(new File(project(':jenkins-cli-wrapper').getBuildDir(), 'libs')) {
+        include('*.jar')
+    }
+
     into 'agent/deps/libs'
 }
+
+compileGroovy.dependsOn('copyDependencies')

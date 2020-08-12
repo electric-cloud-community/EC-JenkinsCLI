@@ -1,5 +1,5 @@
 // This procedure.dsl was generated automatically
-// DO NOT EDIT THIS BLOCK === procedure_autogen starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== procedure_autogen starts ===
 procedure 'Apply Configuration', description: '''Applies JCasC configuration''', {
 
     // Handling binary dependencies
@@ -21,7 +21,7 @@ procedure 'Apply Configuration', description: '''Applies JCasC configuration''',
 
         postProcessor = '''$[/myProject/perl/postpLoader]'''
     }
-// DO NOT EDIT THIS BLOCK === procedure_autogen ends, checksum: b2a55018fa80e50869c170e11e07182d ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== procedure_autogen ends, checksum: b2a55018fa80e50869c170e11e07182d ===
 // Do not update the code above the line
 // procedure properties declaration can be placed in here, like
 // property 'property name', value: "value"

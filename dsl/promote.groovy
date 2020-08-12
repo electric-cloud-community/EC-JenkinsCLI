@@ -1,5 +1,5 @@
 
-// DO NOT EDIT THIS BLOCK === promote_autogen starts ===
+// DO NOT EDIT THIS BLOCK BELOW=== promote_autogen starts ===
 import groovy.transform.BaseScript
 import com.electriccloud.commander.dsl.util.BasePlugin
 
@@ -48,7 +48,7 @@ project pluginName, {
 def retainedProperties = []
 
 upgrade(upgradeAction, pluginName, otherPluginName, stepsWithAttachedCredentials, 'ec_plugin_cfgs', retainedProperties)
-// DO NOT EDIT THIS BLOCK === promote_autogen ends, checksum: d3efc3d27c0f993858b9dc5c69d322ed ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== promote_autogen ends, checksum: d3efc3d27c0f993858b9dc5c69d322ed ===
 // Do not edit the code above this line
 
 project pluginName, {
