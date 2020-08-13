@@ -15,6 +15,21 @@ class JenkinsCLIWrapper {
     private String cliPath = "/tmp/jenkinsCLI.jar"
     private boolean downloadCli = true
 
+    JenkinsCLIWrapper(String endpoint, String username, String password,
+                      String cliPath = null, boolean downloadCli = true) {
+        this.endpoint = endpoint
+        this.username = username
+        this.password = password
+
+        if (cliPath != null) {
+            this.cliPath = cliPath
+        }
+
+        if (!downloadCli && !(new File(this.cliPath).exists())) {
+            throw new RuntimeException("File at ${this.cliPath} does not exist and the 'Download CLI' is set to false")
+        }
+    }
+
     /**
      * restartJenkins - Restart Jenkins/Restart Jenkins
      * Add your code into this method and it will be called when the step runs
@@ -67,13 +82,38 @@ class JenkinsCLIWrapper {
         return executeCommand(["groovy", "="], scriptFile)
     }
 
+    /**
+     * importJenkinsJob - Imports Jenkins Job XML
+     */
+    ExecutionResult importJenkinsJob(String jenkinsJobName, File scriptFile) {
+        return executeCommand(["create-job", jenkinsJobName], scriptFile)
+    }
+
+    /**
+     * readJenkinsJob - Exports Jenkins Job XML to a file
+     * The result will be
+     */
+    ExecutionResult exportJenkinsJob(String jenkinsJobName) throws RuntimeException {
+        return executeCommand(["get-job", jenkinsJobName])
+    }
+
     void pollUntilServerAvailable(int timeout = 300, Closure waitCallback = null) {
         int pollingPeriod = 5
         int waited = timeout
 
-        while (!isServerRunning() && waited > 0) {
+        boolean running = false
+
+        while (!running && waited > 0) {
+            if (waitCallback != null) waitCallback.call(waited, null)
+
+            try {
+                running = isServerRunning()
+            } catch (RuntimeException ex) {
+                if (waitCallback != null) waitCallback.call(waited, ex.getMessage())
+            }
+
             waited -= pollingPeriod
-            if (waitCallback != null) waitCallback(waited)
+
             sleep(pollingPeriod * 1000)
         }
 
@@ -82,15 +122,19 @@ class JenkinsCLIWrapper {
         }
     }
 
-    boolean isServerRunning() {
+    boolean isServerRunning() throws RuntimeException {
         httpClient().isAccessible('/api/json')
     }
 
-    SimpleHttpClient httpClient() {
+    private SimpleHttpClient httpClient() {
         return new SimpleHttpClient(endpoint: endpoint, username: username, password: password)
     }
 
-    String getCliPath() {
+    private String getCliPath() {
+        if (cliPath == null) {
+            cliPath = '/tmp/jenkins-cli.jar'
+        }
+
         boolean fileExists = new File(cliPath).exists()
         if (!fileExists && downloadCli) {
             downloadCliTool(cliPath)
@@ -103,7 +147,7 @@ class JenkinsCLIWrapper {
         return cliPath
     }
 
-    void downloadCliTool(String filepath) {
+    private void downloadCliTool(String filepath) {
         if (!isServerRunning()) {
             println("[DEBUG] We are downloading the jenkins-cli.jar" +
                     " but server is not running yet, so we will wait 90 seconds for server to start"
@@ -133,6 +177,5 @@ class JenkinsCLIWrapper {
 
         return cmd.execute()
     }
-
 
 }

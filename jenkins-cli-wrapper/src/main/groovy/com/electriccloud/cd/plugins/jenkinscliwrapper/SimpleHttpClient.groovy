@@ -29,7 +29,7 @@ class SimpleHttpClient {
         return file
     }
 
-    boolean isAccessible(String path) {
+    boolean isAccessible(String path) throws RuntimeException {
         OkHttpClient client = new OkHttpClient()
         Request request = buildRequest('GET', path)
 
@@ -38,8 +38,7 @@ class SimpleHttpClient {
             return true
         }
         catch (Exception ex) {
-            logger.fine("[DEBUG] HTTP check returned: " + ex.getMessage())
-            return false
+            throw new RuntimeException("HTTP check returned: " + ex.getMessage())
         }
     }
 

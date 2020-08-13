@@ -1,4 +1,4 @@
 $[/myProject/groovy/scripts/preamble.groovy.ignore]
 
-JenkinsCLIWrapper plugin = new JenkinsCLIWrapper()
+JenkinsCLI plugin = new JenkinsCLI()
 plugin.runStep('Create Master Configuration', 'Create Master Configuration', 'createMasterConfiguration')

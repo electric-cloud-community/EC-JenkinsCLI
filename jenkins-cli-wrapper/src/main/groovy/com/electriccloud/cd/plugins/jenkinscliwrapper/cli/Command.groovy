@@ -54,7 +54,7 @@ class Command {
     private static void waitForProcess(Process process, long timeout, Appendable out, Appendable err) {
         Thread tout = StreamReaderThread.runReaderStream(process.getInputStream(), out)
         Thread terr = StreamReaderThread.runReaderStream(process.getErrorStream(), err)
-        if (!process.waitFor(timeout, TimeUnit.MILLISECONDS)) {
+        if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
             finishProcessByTimeout(process)
         } else {
             try {
@@ -90,7 +90,10 @@ class Command {
     ProcessBuilder renderCommand() {
 
         // Flattening args
-        ArrayList<String> procArgs = ([program, args]).flatten() as ArrayList<String>
+        // Flattening args
+        ArrayList<String> procArgs = new ArrayList<>()
+        procArgs.add(program)
+        args.each { it -> procArgs.add((String) it)}
 
         logger.finest("Command: " + procArgs.join(' '))
 
@@ -103,7 +106,9 @@ class Command {
             env.put('NOPAUSE', "1")
         }
 
-        pb.directory(new File(workingDirectory))
+        if (workingDirectory != null){
+            pb.directory(new File(workingDirectory))
+        }
 
         if (redirectInput != null) {
             pb.redirectInput(redirectInput)

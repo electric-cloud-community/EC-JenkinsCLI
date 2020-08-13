@@ -42,6 +42,7 @@ task copyDependencies(type: Copy) {
         exclude group: "org.apache.commons", module: 'commons-lang'
         exclude group: "commons-collections", module: 'commons-collections'
         exclude group: "com.electriccloud.plugins", module: 'flowpdf-groovy-lib'
+        exclude group: "com.electriccloud", module: 'commander-api-bindings'
     }
 
     from(new File(project(':jenkins-cli-wrapper').getBuildDir(), 'libs')) {
@@ -51,4 +52,15 @@ task copyDependencies(type: Copy) {
     into 'agent/deps/libs'
 }
 
-compileGroovy.dependsOn('copyDependencies')
+// Use this task to include third-party dependencies into to agent folder
+task copyLib(dependsOn: [':jenkins-cli-wrapper:jar'], type: Copy) {
+    outputs.upToDateWhen { false }
+
+    from(new File(project(':jenkins-cli-wrapper').getBuildDir(), 'libs')) {
+        include('*.jar')
+    }
+
+    into 'agent/deps/libs'
+}
+
+compileGroovy.dependsOn('copyLib')

@@ -1,12 +1,4 @@
-import com.electriccloud.client.groovy.ElectricFlow
+$[/myProject/groovy/scripts/preamble.groovy.ignore]
 
-// Sample code
-ElectricFlow ef = new ElectricFlow()
-
-try {
-    String endpoint = ef.getProperty(propertyName: 'endpoint')?.property?.value
-} catch (Throwable e) {
-    // throw new RuntimeException("Connection failed")
-}
-
-println "Place your code in here"
+JenkinsCLI plugin = new JenkinsCLI()
+plugin.runStep('CreateConfiguration', 'checkConnection', 'checkConnection')

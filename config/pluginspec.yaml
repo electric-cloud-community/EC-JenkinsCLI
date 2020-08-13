@@ -3,7 +3,7 @@ pluginInfo:
   # Feel free to change it
   # Call flowpdk showdoc pluginspec to see the list of available fields and their description
   pluginName: 'EC-JenkinsCLI'
-  version: '1.0.0'
+  version: '1.1.0'
   description: 'CloudBees CD wrapper for Jenkins CLI actions that cannot be performed with REST API'
   author: 'Anton Horodchuk'
   supportUrl: 'none'
@@ -133,6 +133,90 @@ procedures:
         required: false
         type: textarea
         label: Script text
+
+  - name: 'Import Job from XML'
+    description: 'Creates new job on the Jenkins server'
+    hasConfig: true
+    parameters:
+      - name: jenkinsJobName
+        documentation: 'Name of the new Jenkins job'
+        required: true
+        type: entry
+        label: 'Job Name'
+      - name: xmlFilePath
+        label: 'File Path'
+        documentation: 'Path to a file with an XML representation of the job'
+        required: false
+        type: entry
+      - name: xmlFileScriptContent
+        documentation: 'Content will be saved in a temporary file and provided as "File Path"'
+        label: 'File Content'
+        required: false
+        type: textarea
+
+  - name: 'Export Job to XML'
+    description: 'Exports existing job to an XML file'
+    hasConfig: true
+    parameters:
+      - name: jenkinsJobName
+        label: 'Job Name'
+        documentation: 'Name of the Jenkins job to save'
+        required: true
+        type: entry
+      - name: filePath
+        label: 'Result filepath'
+        documentation: 'XML representation will be saved to the specified filepath'
+        type: entry
+        required: true
+      - name: resultProperty
+        label: saveToProperty
+        documentation: 'If specified, the result will be saved to the property'
+        required: false
+        type: 'entry'
+
+  - name: 'Execute Custom Command'
+    description: 'Allows to execute custom command that is not covered by other procedures'
+    hasConfig: true
+    parameters:
+      - name: command
+        label: 'Command'
+        type: entry
+        required: true
+      - name: arguments
+        label: 'Arguments'
+        documentation: 'List of the arguments separated by a comma. e.g. "execute-groovy,="'
+        required: false
+        type: entry
+      - name: usesStdin
+        label: 'Uses STDIN'
+        documentation: 'Check this if command will require anything to be sent to STDIN.'
+        required: false
+        type: checkbox
+        initiallyChecked: true
+        checkedValue: true
+        uncheckedValue: false
+      - name: inputPath
+        documentation: Path to the file that will be feed to program's STDIN
+        required: false
+        type: entry
+        label: STDIN Source Filepath
+        condition: '${usesStdin} == "true"'
+      - name: inputText
+        documentation: Content that will be feed to program's STDIN
+        required: false
+        type: textarea
+        label: STDIN Source Content
+        condition: '${usesStdin} == "true"'
+      - name: filePath
+        label: 'Result filepath'
+        documentation: 'STDOUT will be saved to the specified filepath'
+        type: entry
+        required: true
+      - name: resultProperty
+        label: saveToProperty
+        documentation: 'If specified, the result will be saved to the property'
+        required: false
+        type: 'entry'
 
   - name: 'Create Master Configuration'
     description: 'Creates additional configuration for the CJOC Managed Master'

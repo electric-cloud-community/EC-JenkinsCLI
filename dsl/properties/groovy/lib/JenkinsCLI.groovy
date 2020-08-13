@@ -50,7 +50,7 @@ class JenkinsCLI extends FlowPlugin {
         if (sp.waitForServer) {
             try {
                 wrapper.pollUntilServerAvailable(300, { int waited ->
-                    sr.setJobStepOutcome("Waiting ${waited}/300 seconds")
+                    sr.setJobStepSummary("Waiting ${waited}/300 seconds")
                     sr.apply()
                 })
                 sr.setJobStepOutcome("success")
@@ -113,10 +113,7 @@ class JenkinsCLI extends FlowPlugin {
             sr.setJobStepSummary("Failed to execute command. See log for details")
             return
         }
-
         sr.setJobStepSummary("Success")
-        sr.apply()
-        log.info("step Apply Configuration has been finished")
     }
 
     /**
@@ -166,9 +163,9 @@ class JenkinsCLI extends FlowPlugin {
         int timeout = Integer.parseInt(sp.getWaitTimeout())
 
         try {
-            wrapper.pollUntilServerAvailable(timeout, { int waited ->
-                sr.setJobStepOutcome("Waiting ${waited}/300 seconds")
-                sr.apply()
+            wrapper.pollUntilServerAvailable(timeout, { int waited, String ex ->
+                sr.setJobStepSummary("Waiting ${waited}/300 seconds. Response: $ex")
+                sr.applyAndFlush()
             })
             sr.setJobStepOutcome("success")
             sr.setJobStepSummary("Jenkins running after restart")
@@ -281,21 +278,156 @@ class JenkinsCLI extends FlowPlugin {
 
     }
 
+    /**
+     * importJobFromXML - Import Job from XML/Import Job from XML
+     * Add your code into this method and it will be called when the step runs
+     * @param config (required: true)
+     * @param jenkinsJobName (required: true)
+     * @param xmlFilePath (required: false)
+     * @param xmlFileScriptContent (required: false)
+
+     */
+    def importJobFromXML(StepParameters p, StepResult sr) {
+        // Use this parameters wrapper for convenient access to your parameters
+        ImportJobFromXMLParameters sp = ImportJobFromXMLParameters.initParameters(p)
+
+        File scriptFile = contentOrFile(sp.getXmlFileScriptContent(), sp.getXmlFilePath())
+        if (!scriptFile) {
+            throw new UnexpectedEmptyValue(
+                    "One of 'Script Path' or 'Script Text' should be specified."
+            )
+        }
+
+        ExecutionResult result = getWrapper().importJenkinsJob(sp.getJenkinsJobName(), scriptFile)
+
+        if (!result.isSuccess()) {
+            log.error(result.toString())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
+        sr.setJobStepSummary("Success")
+    }
+
+    /**
+     * exportJobToXML - Export Job to XML/Export Job to XML
+     * Add your code into this method and it will be called when the step runs
+     * @param config (required: true)
+     * @param jenkinsJobName (required: true)
+     * @param filePath (required: true)
+     * @param resultProperty (required: false)
+
+     */
+    def exportJobToXML(StepParameters p, StepResult sr) {
+        // Use this parameters wrapper for convenient access to your parameters
+        ExportJobToXMLParameters sp = ExportJobToXMLParameters.initParameters(p)
+
+        String jobConfig
+        try {
+            ExecutionResult ex = getWrapper().exportJenkinsJob(sp.getJenkinsJobName())
+            if (!ex.isSuccess()) {
+                throw new RuntimeException("STDERR: " + ex.getStdErr())
+            }
+
+            jobConfig = ex.getStdOut()
+        }
+        catch (RuntimeException ex) {
+            log.error(ex.getMessage())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
+
+        if (sp.getResultProperty() != '') {
+            sr.setOutcomeProperty(sp.getResultProperty(), jobConfig)
+        }
+
+        File resultFile = new File(sp.getFilePath())
+        resultFile.write(jobConfig)
+
+        sr.setJobStepSummary("Success")
+    }
+
+    /**
+     * executeCustomCommand - Execute Custom Command/Execute Custom Command
+     * Add your code into this method and it will be called when the step runs
+     * @param config (required: true)
+     * @param command (required: true)
+     * @param arguments (required: false)
+     * @param usesStdin (required: false)
+     * @param inputPath (required: false)
+     * @param inputText (required: false)
+     */
+    def executeCustomCommand(StepParameters p, StepResult sr) {
+        ExecuteCustomCommandParameters sp = ExecuteCustomCommandParameters.initParameters(p)
+
+        ArrayList<String> args = new ArrayList<>()
+        args.add(sp.getCommand())
+
+        File stdinFile = null
+
+        if (sp.getArguments() != '') {
+            sp.getArguments().split(/,/).collect({ it ->
+                args.add(it)
+            })
+        }
+
+        if (sp.getUsesStdin()) {
+            stdinFile = contentOrFile(sp.getInputText(), sp.getInputPath())
+            if (!stdinFile) {
+                throw new RuntimeException("One of 'Input Text' or 'Input Path'" +
+                        " should be specified when the 'Uses STDIN' is checked")
+            }
+        }
+
+        ExecutionResult result = getWrapper().executeCommand(args, stdinFile)
+
+        if (!result.isSuccess()) {
+            log.error(result.toString())
+            sr.setJobStepOutcome('error')
+            sr.setJobStepSummary("Failed to execute command. See log for details")
+            return
+        }
+
+        if (sp.getResultProperty() != '') {
+            sr.setOutcomeProperty(sp.getResultProperty(), result.getStdOut())
+        }
+
+        File resultFile = new File(sp.getFilePath())
+        resultFile.write(result.getStdOut())
+
+        sr.setJobStepSummary("Success")
+    }
+
 // === step ends ===
 
     JenkinsCLIWrapper getWrapper() {
         Config config = this.getContext().getConfigValues()
 
         com.cloudbees.flowpdf.Credential cred = config.getRequiredCredential('credential')
+
+        String endpoint = config.getRequiredParameter('endpoint').getValue()
+        String username = cred.getUserName()
+        String password = cred.getSecretValue()
+        String cliPath = config.getParameter('cliPath').getValue()
         String downloadCli = config.getParameter('downloadCli').getValue()
 
+        log.debug("PARAMETERS ARE: " +
+                "endpoint: '$endpoint'\n" +
+                "username: '$username'\n" +
+                "password: '[PROTECTED]'\n" +
+                "cliPath: '$cliPath'\n" +
+                "downloadCli: '$downloadCli'")
+
         JenkinsCLIWrapper wrapper = new JenkinsCLIWrapper(
-                endpoint: config.getRequiredParameter('endpoint').getValue(),
-                username: cred.getUserName(),
-                password: cred.getSecretValue(),
-                cliPath: config.getParameter('cliPath').getValue(),
-                downloadCli: Boolean.parseBoolean(downloadCli),
+                endpoint,
+                username,
+                password,
+                cliPath,
+                Boolean.parseBoolean(downloadCli)
         )
+
+        log.debug("AFter wrapper")
 
         return wrapper
     }
