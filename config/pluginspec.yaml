@@ -10,7 +10,7 @@ pluginInfo:
   repositoryUrl: 'https://github.com/electric-cloud-community/EC-JenkinsCLI'
   category: 'Utilities'
   shell: 'ec-groovy'
-  catalogLabel: 'jenkins-cli'
+  label: 'jenkins-cli'
   detailedDescription: 'Wrapper for the jenkins-cli.jar to automate Jenkins maintenance tasks. Can download jenkins-cli.jar from the host'
 
 # Plugin configuration description
