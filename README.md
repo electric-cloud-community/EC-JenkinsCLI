@@ -21,12 +21,12 @@ Build plugin with `flowpdk build` and apply it to the server.
 
 ### Changelog:
 
-- 1.0.0:
-- - Initial release
-    
-- 1.1.0
-- - Added procedures for Jenkins Job import/export
-- - Added procedure to execute custom CLI command
-
 - 1.1.1:
-- - Implemented check connection
+  - Implemented check connection
+  
+- 1.1.0
+  - Added procedures for Jenkins Job import/export
+  - Added procedure to execute custom CLI command
+  
+- 1.0.0:
+  - Initial release
