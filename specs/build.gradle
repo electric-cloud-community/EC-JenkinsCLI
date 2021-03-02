@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            url "https://dl.bintray.com/ecpluginsdev/maven"
+        }
+        mavenLocal()
+    }
+
+    dependencies {
+        classpath "com.cloudbees:hen:1.1.1"
+    }
+}
+
+
+plugins {
+    id "com.cloudbees.cd.plugins.specs" version "1.8.1.0"
+}
+
+apply plugin: 'com.cloudbees.cd.plugins.specs-hen'
+apply plugin: 'java'
+apply plugin: 'idea'
+
+
+version = "1.0.0"
+description = "EC-JenkinsCLI Specs"
+sourceCompatibility = 1.8
+
+defaultTasks 'test'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    mavenLocal()
+    maven {
+        url  "https://dl.bintray.com/ecpluginsdev/maven"
+    }
+}
+
+generateHenClasses {
+    println System.getenv()
+    pluginName = 'EC-ServiceNow'
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy-all:2.5.5'
+    implementation 'org.spockframework:spock-core:1.2-groovy-2.4'
+    implementation ('com.electriccloud:ec-specs-plugins-core:1.9.2') {
+        exclude(group: "org.codehaus.groovy", module: "groovy-all")
+    }
+    implementation 'com.jayway.restassured:rest-assured:2.4.0'
+    implementation 'de.gesellix:docker-client:2018-01-26T21-28-05'
+
+    testImplementation 'org.slf4j:slf4j-api:1.7.13'
+    testImplementation 'org.slf4j:slf4j-simple:1.7.13'
+
+    implementation("com.cloudbees:hen:1.2.0") {
+        exclude(group: "org.codehaus.groovy", module: "groovy-all")
+    }
+
+}
+
+sendAllureReports {
+    projectName = 'ec-jenkinscli'
+}
+
+generateHenClasses {
+    pluginName = 'EC-JenkinsCLI'
+}

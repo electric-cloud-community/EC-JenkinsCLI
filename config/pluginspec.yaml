@@ -3,7 +3,7 @@ pluginInfo:
   # Feel free to change it
   # Call flowpdk showdoc pluginspec to see the list of available fields and their description
   pluginName: 'EC-JenkinsCLI'
-  version: '1.1.0'
+  version: '1.1.1'
   description: 'CloudBees CD wrapper for Jenkins CLI actions that cannot be performed with REST API'
   author: 'Anton Horodchuk'
   supportUrl: 'please file a GH issue'
@@ -212,9 +212,9 @@ procedures:
         condition: '${usesStdin} == "true"'
       - name: filePath
         label: 'Result filepath'
-        documentation: 'STDOUT will be saved to the specified filepath'
+        documentation: 'If specified, the program STDOUT output will be saved to the specified resource filepath. Can be absolute or relative to the job workspace.'
         type: entry
-        required: true
+        required: false
       - name: resultProperty
         label: saveToProperty
         documentation: 'If specified, the result will be saved to the property'

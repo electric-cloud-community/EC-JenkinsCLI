@@ -47,7 +47,7 @@ class ExecuteCustomCommandParameters {
         parameters.inputPath = inputPath
         def inputText = sp.getParameter('inputText').value
         parameters.inputText = inputText
-        def filePath = sp.getRequiredParameter('filePath').value
+        def filePath = sp.getParameter('filePath').value
         parameters.filePath = filePath
         def resultProperty = sp.getParameter('resultProperty').value
         parameters.resultProperty = resultProperty
@@ -55,4 +55,4 @@ class ExecuteCustomCommandParameters {
         return parameters
     }
 }
-// DO NOT EDIT THIS BLOCK ABOVE ^^^=== Parameters ends, checksum: a62671be9f2e5f9031752c3aa24a84cb ===
+// DO NOT EDIT THIS BLOCK ABOVE ^^^=== Parameters ends, checksum: 52881d2625758eca5769a023c6722049 ===

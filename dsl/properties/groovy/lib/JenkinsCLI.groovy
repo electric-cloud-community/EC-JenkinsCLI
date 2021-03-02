@@ -389,14 +389,18 @@ class JenkinsCLI extends FlowPlugin {
             return
         }
 
+        sr.setJobStepSummary("Command executed successfully")
+
         if (sp.getResultProperty() != '') {
             sr.setOutcomeProperty(sp.getResultProperty(), result.getStdOut())
+            sr.setJobStepSummary("Command STDOUT content was saved to property ${sp.getResultProperty()}")
         }
 
-        File resultFile = new File(sp.getFilePath())
-        resultFile.write(result.getStdOut())
-
-        sr.setJobStepSummary("Success")
+        if (sp.getFilePath()){
+            File resultFile = new File(sp.getFilePath())
+            resultFile.write(result.getStdOut())
+            sr.setJobStepSummary("Command STDOUT content was saved to file ${sp.getFilePath()}")
+        }
     }
 
 // === step ends ===
@@ -440,6 +444,23 @@ class JenkinsCLI extends FlowPlugin {
             scriptFile = new File(filepath)
         }
         return scriptFile
+    }
+
+    def checkConnection(StepParameters p, StepResult sr){
+        try {
+            getWrapper().isServerRunning()
+        } catch (RuntimeException ex){
+            sr.setJobStepOutcome('error')
+
+            Config config = getContext().getConfigValues()
+            String host = config.getRequiredParameter('endpoint').getValue()
+
+            String message = ex.getMessage() + "\n" +
+                "Connection to the URL '${host}' has failed. Please check the configuration values."
+
+            sr.setOutcomeProperty('/myJob/configError', message)
+            sr.setJobStepSummary(message)
+        }
     }
 
     static File writeToFile(String content) {

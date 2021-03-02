@@ -105,20 +105,17 @@ class JenkinsCLIWrapper {
 
         while (!running && waited > 0) {
             if (waitCallback != null) waitCallback.call(waited, null)
-
             try {
                 running = isServerRunning()
             } catch (RuntimeException ex) {
                 if (waitCallback != null) waitCallback.call(waited, ex.getMessage())
+                sleep(pollingPeriod * 1000)
+                waited -= pollingPeriod
             }
-
-            waited -= pollingPeriod
-
-            sleep(pollingPeriod * 1000)
         }
 
         if (waited <= 0) {
-            throw new RuntimeException("Server is not available after $timeout seconds")
+            throw new RuntimeException("Server '${endpoint}' is not available after $timeout seconds")
         }
     }
 
